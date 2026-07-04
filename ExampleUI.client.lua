@@ -1,25 +1,19 @@
--- Example Usage of the Roblox UI Framework
+-- Example Usage of the new Tabbed Roblox UI Framework
 -- Place this in StarterPlayerScripts or StarterGui
--- Ensure UIFramework module is correctly referenced (e.g. in ReplicatedStorage)
+-- In an executor, just use loadstring on UI.lua
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 
--- Get the local player
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- In a real scenario, you'd require it from ReplicatedStorage
--- local UIFramework = require(ReplicatedStorage:WaitForChild("UIFramework"))
--- For the sake of this example, we assume it's a sibling of this script if placed in StarterGui:
 local success, UIFramework = pcall(function()
-    return require(script.Parent:WaitForChild("UIFramework"))
+    return require(script.Parent:WaitForChild("UI"))
 end)
 
--- If the above fails, let's just make sure we tell the user how to set it up
 if not success then
-    warn("UIFramework module not found! Please place it in the same folder as this script, or update the require path.")
+    -- Fallback for executors / loadstring testing
+    -- In a real repo, this would be the raw github url
+    warn("Could not require UI module locally. Make sure it's named UI.lua")
     return
 end
 
@@ -27,7 +21,10 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GlassmorphismHub"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = playerGui
+
+-- Use CoreGui if available (Exploit environment), else PlayerGui (Studio environment)
+local envSuccess, coreGui = pcall(function() return game:GetService("CoreGui") end)
+ScreenGui.Parent = envSuccess and coreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
 
 -- Initialize Framework
 local UI = UIFramework.new()
@@ -35,27 +32,26 @@ local UI = UIFramework.new()
 -- Create the main window
 local Window = UI:CreateWindow(ScreenGui, "Antigravity Hub")
 
--- Add some non-functional elegant UI elements
-UI:CreateButton(Window, "Özellik 1 (İşlevsiz)", function()
-    print("Özellik 1 tıklandı!")
+-- Create Tabs
+-- We use minimalist Lucide/Material icon asset IDs instead of emojis
+local HomeTab = UI:CreateTab(Window, "Ana Sayfa", "rbxassetid://6031094678") -- Home icon
+local PlayerTab = UI:CreateTab(Window, "Karakter", "rbxassetid://6031290374") -- User icon
+local SettingsTab = UI:CreateTab(Window, "Ayarlar", "rbxassetid://7059346373") -- Gear icon
+
+-- Add elements to the Home Tab
+UI:CreateButton(HomeTab, "Hoşgeldin!", function()
+    print("Ana sayfadasın.")
+end)
+UI:CreateToggle(HomeTab, "Otomatik Kasılma", false)
+
+-- Add elements to the Player Tab
+UI:CreateSlider(PlayerTab, "Yürüme Hızı", 16, 200, 50)
+UI:CreateSlider(PlayerTab, "Zıplama Gücü", 50, 300, 100)
+UI:CreateToggle(PlayerTab, "Görünmezlik (ESP)", true)
+
+-- Add elements to the Settings Tab
+UI:CreateButton(SettingsTab, "Arayüzü Kapat", function()
+    ScreenGui:Destroy()
 end)
 
-UI:CreateButton(Window, "Özellik 2 (İşlevsiz)", function()
-    print("Özellik 2 tıklandı!")
-end)
-
-UI:CreateSlider(Window, "Hız Ayarı", 16, 100, 50)
-UI:CreateSlider(Window, "Zıplama Gücü", 50, 200, 100)
-
-UI:CreateToggle(Window, "Görünmezlik (ESP)", true)
-UI:CreateToggle(Window, "Otomatik Tıklama", false)
-
--- Back button mock-up at the bottom
-local BackButton = UI:CreateButton(Window, "Geri Dön (İşlevsiz)", function()
-    print("Geri dön tıklandı!")
-end)
-
--- Styling the back button a bit differently if we wanted to
--- but for now it just blends with the glassmorphism theme perfectly
-
-print("Glassmorphism UI loaded successfully!")
+print("Tabbed Glassmorphism UI loaded successfully!")
