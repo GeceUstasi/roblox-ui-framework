@@ -3,6 +3,7 @@ Framework.__index = Framework
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Theme & Design Constants (Upscaled, Differentiated Modern Style)
 local Theme = {
@@ -761,6 +762,253 @@ function Framework:CreateMultiDropdown(parentSection, text, options, defaultOpti
     end)
     
     return DropdownContainer
+end
+
+function Framework:CreateLabel(parentSection, text)
+    local LabelFrame = Instance.new("Frame")
+    LabelFrame.Size = UDim2.new(1, 0, 0, 24)
+    LabelFrame.BackgroundTransparency = 1
+    LabelFrame.ZIndex = 4
+    LabelFrame.Parent = parentSection
+    
+    local Title = createTextLabel(text, UDim2.new(1, -10, 1, 0), UDim2.new(0, 5, 0, 0))
+    Title.TextSize = 13
+    Title.TextColor3 = Theme.TextSecondaryColor
+    Title.ZIndex = 4
+    Title.Parent = LabelFrame
+    
+    return LabelFrame
+end
+
+function Framework:CreateTextBox(parentSection, text, placeholder, clearOnFocus, callback)
+    local TextBoxFrame = Instance.new("Frame")
+    TextBoxFrame.Size = UDim2.new(1, 0, 0, 36)
+    TextBoxFrame.BackgroundTransparency = 1
+    TextBoxFrame.ZIndex = 4
+    TextBoxFrame.Parent = parentSection
+    
+    local Title = createTextLabel(text, UDim2.new(0, 100, 1, 0))
+    Title.TextSize = 14
+    Title.ZIndex = 4
+    Title.Parent = TextBoxFrame
+    
+    local InputBox = Instance.new("TextBox")
+    InputBox.Size = UDim2.new(1, -110, 0, 24)
+    InputBox.Position = UDim2.new(0, 110, 0.5, -12)
+    InputBox.BackgroundColor3 = Theme.WindowBackground
+    InputBox.Font = Theme.Font
+    InputBox.Text = ""
+    InputBox.PlaceholderText = placeholder or ""
+    InputBox.TextColor3 = Theme.TextColor
+    InputBox.PlaceholderColor3 = Theme.TextSecondaryColor
+    InputBox.TextSize = 13
+    InputBox.ClearTextOnFocus = clearOnFocus
+    InputBox.ClipsDescendants = true
+    InputBox.ZIndex = 4
+    InputBox.Parent = TextBoxFrame
+    applyCorner(InputBox)
+    applyStroke(InputBox)
+    
+    InputBox.FocusLost:Connect(function(enterPressed)
+        if callback then callback(InputBox.Text, enterPressed) end
+    end)
+    
+    return TextBoxFrame
+end
+
+function Framework:CreateKeybind(parentSection, text, defaultKey, callback)
+    local KeybindFrame = Instance.new("Frame")
+    KeybindFrame.Size = UDim2.new(1, 0, 0, 32)
+    KeybindFrame.BackgroundTransparency = 1
+    KeybindFrame.ZIndex = 4
+    KeybindFrame.Parent = parentSection
+    
+    local Title = createTextLabel(text, UDim2.new(1, -100, 1, 0))
+    Title.TextSize = 14
+    Title.ZIndex = 4
+    Title.Parent = KeybindFrame
+    
+    local BindBtn = Instance.new("TextButton")
+    BindBtn.Size = UDim2.new(0, 80, 0, 24)
+    BindBtn.AnchorPoint = Vector2.new(1, 0.5)
+    BindBtn.Position = UDim2.new(1, -5, 0.5, 0)
+    BindBtn.BackgroundColor3 = Theme.WindowBackground
+    BindBtn.Text = defaultKey and defaultKey.Name or "None"
+    BindBtn.Font = Theme.Font
+    BindBtn.TextColor3 = Theme.AccentEnd
+    BindBtn.TextSize = 12
+    BindBtn.ZIndex = 4
+    BindBtn.Parent = KeybindFrame
+    applyCorner(BindBtn)
+    applyStroke(BindBtn)
+    
+    local currentKey = defaultKey
+    local isBinding = false
+    
+    BindBtn.MouseButton1Click:Connect(function()
+        if isBinding then return end
+        isBinding = true
+        BindBtn.Text = "..."
+        BindBtn.TextColor3 = Theme.TextColor
+    end)
+    
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not isBinding then
+            if input.KeyCode == currentKey and not gameProcessed then
+                if callback then callback(currentKey.Name, true) end
+            end
+            return
+        end
+        
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            local key = input.KeyCode
+            if key == Enum.KeyCode.Escape then
+                currentKey = nil
+                BindBtn.Text = "None"
+            else
+                currentKey = key
+                BindBtn.Text = key.Name
+            end
+            BindBtn.TextColor3 = Theme.AccentEnd
+            isBinding = false
+            if callback then callback(currentKey and currentKey.Name or "None", false) end
+        end
+    end)
+    
+    return KeybindFrame
+end
+
+function Framework:CreateColorPicker(parentSection, text, defaultColor, callback)
+    defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
+    local currentColor = defaultColor
+    
+    local ColorContainer = Instance.new("Frame")
+    ColorContainer.Size = UDim2.new(1, 0, 0, 36)
+    ColorContainer.BackgroundColor3 = Theme.WindowBackground
+    ColorContainer.BackgroundTransparency = 0.5
+    ColorContainer.ClipsDescendants = true
+    ColorContainer.ZIndex = 4
+    ColorContainer.Parent = parentSection
+    applyCorner(ColorContainer)
+    applyStroke(ColorContainer)
+    
+    local MainBtn = Instance.new("TextButton")
+    MainBtn.Size = UDim2.new(1, 0, 0, 36)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = ""
+    MainBtn.ZIndex = 5
+    MainBtn.Parent = ColorContainer
+    
+    local Title = createTextLabel(text, UDim2.new(1, -60, 1, 0), UDim2.new(0, 15, 0, 0))
+    Title.TextSize = 13
+    Title.ZIndex = 5
+    Title.Parent = MainBtn
+    
+    local PreviewColor = Instance.new("Frame")
+    PreviewColor.Size = UDim2.new(0, 24, 0, 16)
+    PreviewColor.AnchorPoint = Vector2.new(1, 0.5)
+    PreviewColor.Position = UDim2.new(1, -15, 0.5, 0)
+    PreviewColor.BackgroundColor3 = currentColor
+    PreviewColor.ZIndex = 5
+    PreviewColor.Parent = MainBtn
+    applyCorner(PreviewColor, UDim.new(0, 4))
+    applyStroke(PreviewColor, Color3.fromRGB(0,0,0), 0.5)
+    
+    local PickerArea = Instance.new("Frame")
+    PickerArea.Size = UDim2.new(1, 0, 0, 90)
+    PickerArea.Position = UDim2.new(0, 0, 0, 36)
+    PickerArea.BackgroundTransparency = 1
+    PickerArea.ZIndex = 5
+    PickerArea.Parent = ColorContainer
+    
+    local function createRGBSlider(yPos, colorName, maxColor)
+        local Track = Instance.new("TextButton")
+        Track.Text = ""
+        Track.Size = UDim2.new(1, -30, 0, 14)
+        Track.Position = UDim2.new(0, 15, 0, yPos)
+        Track.BackgroundColor3 = Color3.fromRGB(255,255,255)
+        Track.ZIndex = 6
+        Track.Parent = PickerArea
+        applyCorner(Track, UDim.new(0, 4))
+        
+        local UIGradient = Instance.new("UIGradient")
+        UIGradient.Color = ColorSequence.new(Color3.fromRGB(0,0,0), maxColor)
+        UIGradient.Parent = Track
+        
+        local Marker = Instance.new("Frame")
+        Marker.Size = UDim2.new(0, 4, 1, 4)
+        Marker.AnchorPoint = Vector2.new(0.5, 0.5)
+        Marker.Position = UDim2.new(1, 0, 0.5, 0)
+        Marker.BackgroundColor3 = Color3.fromRGB(255,255,255)
+        Marker.ZIndex = 7
+        Marker.Parent = Track
+        applyStroke(Marker, Color3.fromRGB(0,0,0), 0)
+        
+        return Track, Marker
+    end
+    
+    local rTrack, rMarker = createRGBSlider(10, "R", Color3.fromRGB(255, 0, 0))
+    local gTrack, gMarker = createRGBSlider(35, "G", Color3.fromRGB(0, 255, 0))
+    local bTrack, bMarker = createRGBSlider(60, "B", Color3.fromRGB(0, 0, 255))
+    
+    local function updateColor()
+        PreviewColor.BackgroundColor3 = currentColor
+        if callback then callback(currentColor) end
+    end
+    
+    local function updateMarkers()
+        rMarker.Position = UDim2.new(currentColor.R, 0, 0.5, 0)
+        gMarker.Position = UDim2.new(currentColor.G, 0, 0.5, 0)
+        bMarker.Position = UDim2.new(currentColor.B, 0, 0.5, 0)
+    end
+    updateMarkers()
+    
+    local function bindSlider(track, component)
+        local dragging = false
+        track.MouseButton1Down:Connect(function() dragging = true end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local relativeX = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                local r, g, b = currentColor.R, currentColor.G, currentColor.B
+                if component == "R" then r = relativeX
+                elseif component == "G" then g = relativeX
+                elseif component == "B" then b = relativeX end
+                currentColor = Color3.new(r, g, b)
+                updateMarkers()
+                updateColor()
+            end
+        end)
+        -- Support click without dragging
+        track.MouseButton1Click:Connect(function()
+            local relativeX = math.clamp((Players.LocalPlayer:GetMouse().X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+            local r, g, b = currentColor.R, currentColor.G, currentColor.B
+            if component == "R" then r = relativeX
+            elseif component == "G" then g = relativeX
+            elseif component == "B" then b = relativeX end
+            currentColor = Color3.new(r, g, b)
+            updateMarkers()
+            updateColor()
+        end)
+    end
+    
+    bindSlider(rTrack, "R")
+    bindSlider(gTrack, "G")
+    bindSlider(bTrack, "B")
+    
+    local isOpen = false
+    MainBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            TweenService:Create(ColorContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 126)}):Play()
+        else
+            TweenService:Create(ColorContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 36)}):Play()
+        end
+    end)
+    
+    return ColorContainer
 end
 
 return Framework
