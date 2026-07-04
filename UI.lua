@@ -286,22 +286,27 @@ function Framework:CreateSection(parentTab, title, side)
     local col = (side == "Right") and parentTab.Right or parentTab.Left
     
     local SectionFrame = Instance.new("Frame")
-    SectionFrame.Name = "Section_" .. title
-    SectionFrame.Size = UDim2.new(1, 0, 0, 50) -- Height will auto-adjust
+    SectionFrame.Name = "Section_" .. (title or "Group")
+    SectionFrame.Size = UDim2.new(1, 0, 0, 50)
     SectionFrame.BackgroundColor3 = Theme.SectionBackground
     SectionFrame.Parent = col
     applyCorner(SectionFrame)
     applyStroke(SectionFrame)
     
-    local SectionTitle = createTextLabel(title, UDim2.new(1, -20, 0, 30), UDim2.new(0, 10, 0, 0), Enum.TextXAlignment.Left, true)
-    SectionTitle.TextColor3 = Theme.TextSecondaryColor
-    SectionTitle.Parent = SectionFrame
-    
     local SectionContent = Instance.new("Frame")
-    SectionContent.Size = UDim2.new(1, 0, 1, -30)
-    SectionContent.Position = UDim2.new(0, 0, 0, 30)
+    SectionContent.Size = UDim2.new(1, 0, 1, 0)
+    SectionContent.Position = UDim2.new(0, 0, 0, 0)
     SectionContent.BackgroundTransparency = 1
     SectionContent.Parent = SectionFrame
+    
+    if title and title ~= "" then
+        local SectionTitle = createTextLabel(title, UDim2.new(1, -20, 0, 30), UDim2.new(0, 10, 0, 0), Enum.TextXAlignment.Left, true)
+        SectionTitle.TextColor3 = Theme.TextSecondaryColor
+        SectionTitle.Parent = SectionFrame
+        
+        SectionContent.Size = UDim2.new(1, 0, 1, -30)
+        SectionContent.Position = UDim2.new(0, 0, 0, 30)
+    end
     
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -309,15 +314,16 @@ function Framework:CreateSection(parentTab, title, side)
     ListLayout.Parent = SectionContent
     
     local Padding = Instance.new("UIPadding")
+    Padding.PaddingTop = UDim.new(0, 10)
     Padding.PaddingLeft = UDim.new(0, 10)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.PaddingBottom = UDim.new(0, 10)
     Padding.Parent = SectionContent
     
-    -- Auto-resize logic
     ListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        local extra = (title and title ~= "") and 40 or 20
         SectionContent.Size = UDim2.new(1, 0, 0, ListLayout.AbsoluteContentSize.Y)
-        SectionFrame.Size = UDim2.new(1, 0, 0, ListLayout.AbsoluteContentSize.Y + 40)
+        SectionFrame.Size = UDim2.new(1, 0, 0, ListLayout.AbsoluteContentSize.Y + extra)
         col.CanvasSize = UDim2.new(0, 0, 0, col.UIListLayout.AbsoluteContentSize.Y + 10)
     end)
     

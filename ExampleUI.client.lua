@@ -1,5 +1,3 @@
--- Example Usage of the Karpiware-style Tabbed Roblox UI Framework
-
 local Players = game:GetService("Players")
 
 local success, UIFramework = pcall(function()
@@ -21,41 +19,48 @@ ScreenGui.Parent = envSuccess and coreGui or Players.LocalPlayer:WaitForChild("P
 local UI = UIFramework.new()
 local Window = UI:CreateWindow(ScreenGui, "Karpiware 0.1.0", "Super Cool Exploit Interface")
 
--- Tabs
-local LegitTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://6031094678")
-local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://6031290374")
-local SettingsTab = UI:CreateTab(Window, "Settings", "rbxassetid://7059346373")
+-- TABS (Exact match from screenshot)
+local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373") -- target/crosshair
+local AntiAimTab = UI:CreateTab(Window, "Anti-Aim", "rbxassetid://7059346373")
+local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://7059346373")
+local SkinsTab = UI:CreateTab(Window, "Skins", "rbxassetid://7059346373")
+local MiscTab = UI:CreateTab(Window, "Miscellaneous", "rbxassetid://7059346373")
+local ConfigsTab = UI:CreateTab(Window, "Configs", "rbxassetid://7059346373")
+local ScriptsTab = UI:CreateTab(Window, "Scripts", "rbxassetid://7059346373")
 
--- LEGITBOT TAB SECTIONS --
+-- LEGITBOT TAB PROPERTIES (From red circles) --
 
--- Left Column
-local AimbotSection = UI:CreateSection(LegitTab, "Aimbot", "Left")
-UI:CreateToggle(AimbotSection, "Aimbot enabled", false)
-UI:CreateToggle(AimbotSection, "Silent aim", false)
-UI:CreateSlider(AimbotSection, "Field of view", 0, 360, 180)
-UI:CreateToggle(AimbotSection, "Override resolver", false)
+-- Top Left Box (No Title)
+local TopLeft = UI:CreateSection(LegitbotTab, nil, "Left")
+UI:CreateToggle(TopLeft, "Aimbot enabled", false)
+UI:CreateToggle(TopLeft, "Silent aim", false)
+UI:CreateSlider(TopLeft, "Field of view", 0, 360, 180)
+UI:CreateToggle(TopLeft, "Override resolver", false)
 
-local MovementSection = UI:CreateSection(LegitTab, "Movement", "Left")
-UI:CreateToggle(MovementSection, "Autostrafe", false)
-UI:CreateSlider(MovementSection, "Strafe speed", 0, 100, 50)
-UI:CreateToggle(MovementSection, "Bhop", true)
+-- Top Right Box (No Title)
+local TopRight = UI:CreateSection(LegitbotTab, nil, "Right")
+UI:CreateSlider(TopRight, "Minimum damage", 0, 100, 30)
+UI:CreateToggle(TopRight, "Automatic penetration", true)
+UI:CreateToggle(TopRight, "Force body aim", false)
+UI:CreateToggle(TopRight, "Delay shot", false)
+-- Extra options faintly visible below "Delay shot"
+UI:CreateToggle(TopRight, "Hitchance", false)
+UI:CreateToggle(TopRight, "Multiple hitbox...", false)
+UI:CreateToggle(TopRight, "Auto stop condition...", false)
 
--- Right Column
-local WeaponSection = UI:CreateSection(LegitTab, "Weapon", "Right")
-UI:CreateSlider(WeaponSection, "Minimum damage", 0, 100, 30)
-UI:CreateToggle(WeaponSection, "Automatic penetration", true)
-UI:CreateToggle(WeaponSection, "Force body aim", false)
-UI:CreateToggle(WeaponSection, "Delay shot", false)
+-- Bottom Left Box
+local BottomLeft = UI:CreateSection(LegitbotTab, nil, "Left")
+UI:CreateToggle(BottomLeft, "Autostrafe", false)
+UI:CreateSlider(BottomLeft, "Strafe speed", 0, 100, 50)
+UI:CreateToggle(BottomLeft, "Strafe point scale", false)
+UI:CreateSlider(BottomLeft, "Strafe scale", 0, 100, 70)
+UI:CreateSlider(BottomLeft, "Strafe p. scale", 0, 100, 60)
+UI:CreateToggle(BottomLeft, "Force directional...", false)
 
-local MiscSection = UI:CreateSection(LegitTab, "Miscellaneous", "Right")
-UI:CreateToggle(MiscSection, "Auto stop", true)
-UI:CreateToggle(MiscSection, "Hide shots", false)
-UI:CreateSlider(MiscSection, "Fake lag limit", 0, 14, 14)
+-- Bottom Right Box
+local BottomRight = UI:CreateSection(LegitbotTab, nil, "Right")
+UI:CreateToggle(BottomRight, "Double tap", false)
+UI:CreateToggle(BottomRight, "Hide shots", false)
+UI:CreateSlider(BottomRight, "Expand fake lag limit", 0, 14, 14)
 
-
--- SETTINGS TAB --
-local UiSection = UI:CreateSection(SettingsTab, "Interface", "Left")
--- Simple custom button using a toggle style visually, but just to show it's here
-UI:CreateToggle(UiSection, "Dark Mode", true)
-
-print("Karpiware UI loaded successfully!")
+print("Karpiware exact match UI loaded successfully!")
