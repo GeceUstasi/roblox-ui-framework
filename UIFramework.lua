@@ -17,7 +17,7 @@ local Theme = {
     BorderColor = Color3.fromRGB(255, 255, 255),
     BorderTransparency = 0.85, -- Subtle white outline for glass effect
     
-    Font = Enum.Font.GothamSSm,
+    Font = Enum.Font.SourceSans,
     CornerRadius = UDim.new(0, 8)
 }
 
@@ -80,7 +80,7 @@ function Framework:CreateWindow(screenGui, titleText)
     
     local Title = createTextLabel(titleText or "Window Title", UDim2.new(1, -30, 1, 0), UDim2.new(0, 15, 0, 0))
     Title.TextSize = 16
-    Title.Font = Enum.Font.GothamBold
+    Title.Font = Enum.Font.SourceSansBold
     Title.Parent = TopBar
     
     -- Divider
