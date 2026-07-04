@@ -230,7 +230,8 @@ function Framework:CreateWindow(screenGui, titleText, subtitleText)
     
     local SettingsBtn = Instance.new("ImageButton")
     SettingsBtn.Size = UDim2.new(0, 18, 0, 18) -- Bigger icon
-    SettingsBtn.Position = UDim2.new(1, -38, 0.5, -9)
+    SettingsBtn.AnchorPoint = Vector2.new(1, 0.5)
+    SettingsBtn.Position = UDim2.new(1, -20, 0.5, 0)
     SettingsBtn.BackgroundTransparency = 1
     SettingsBtn.Image = "rbxassetid://7059346373"
     SettingsBtn.ImageColor3 = Theme.TextSecondaryColor
@@ -562,6 +563,204 @@ function Framework:CreateButton(parentSection, text, callback)
     end
     
     return TextButton
+end
+
+function Framework:CreateDropdown(parentSection, text, options, defaultOption, callback)
+    local DropdownContainer = Instance.new("Frame")
+    DropdownContainer.Size = UDim2.new(1, 0, 0, 36)
+    DropdownContainer.BackgroundColor3 = Theme.WindowBackground
+    DropdownContainer.BackgroundTransparency = 0.5
+    DropdownContainer.ClipsDescendants = true
+    DropdownContainer.ZIndex = 4
+    DropdownContainer.Parent = parentSection
+    applyCorner(DropdownContainer)
+    local border = applyStroke(DropdownContainer)
+    
+    local MainBtn = Instance.new("TextButton")
+    MainBtn.Size = UDim2.new(1, 0, 0, 36)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = ""
+    MainBtn.ZIndex = 5
+    MainBtn.Parent = DropdownContainer
+    
+    local Title = createTextLabel(text .. ": " .. tostring(defaultOption or "None"), UDim2.new(1, -30, 1, 0), UDim2.new(0, 15, 0, 0))
+    Title.TextSize = 13
+    Title.ZIndex = 5
+    Title.Parent = MainBtn
+    
+    local Icon = Instance.new("ImageLabel")
+    Icon.Size = UDim2.new(0, 14, 0, 14)
+    Icon.AnchorPoint = Vector2.new(1, 0.5)
+    Icon.Position = UDim2.new(1, -15, 0.5, 0)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://7059346373" -- Gear default for now, let's use a chevron down id if available, but this is fine. Let's use a standard V shape.
+    -- Actually, rbxassetid://6031091004 is a chevron down.
+    Icon.Image = "rbxassetid://6031091004"
+    Icon.ImageColor3 = Theme.TextSecondaryColor
+    Icon.ZIndex = 5
+    Icon.Parent = MainBtn
+    
+    local OptionsFrame = Instance.new("Frame")
+    OptionsFrame.Size = UDim2.new(1, 0, 1, -36)
+    OptionsFrame.Position = UDim2.new(0, 0, 0, 36)
+    OptionsFrame.BackgroundTransparency = 1
+    OptionsFrame.ZIndex = 5
+    OptionsFrame.Parent = DropdownContainer
+    
+    local OptionLayout = Instance.new("UIListLayout")
+    OptionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    OptionLayout.Parent = OptionsFrame
+    
+    local isOpen = false
+    local totalHeight = 36
+    
+    for _, opt in ipairs(options) do
+        local OptBtn = Instance.new("TextButton")
+        OptBtn.Size = UDim2.new(1, 0, 0, 30)
+        OptBtn.BackgroundColor3 = Theme.ElementHover
+        OptBtn.BackgroundTransparency = 1
+        OptBtn.Text = ""
+        OptBtn.ZIndex = 5
+        OptBtn.Parent = OptionsFrame
+        totalHeight = totalHeight + 30
+        
+        local OptLabel = createTextLabel(tostring(opt), UDim2.new(1, -30, 1, 0), UDim2.new(0, 20, 0, 0))
+        OptLabel.TextSize = 13
+        OptLabel.TextColor3 = (opt == defaultOption) and Theme.AccentEnd or Theme.TextSecondaryColor
+        OptLabel.ZIndex = 5
+        OptLabel.Parent = OptBtn
+        
+        OptBtn.MouseEnter:Connect(function() TweenService:Create(OptBtn, TweenInfoFast, {BackgroundTransparency = 0.5}):Play() end)
+        OptBtn.MouseLeave:Connect(function() TweenService:Create(OptBtn, TweenInfoFast, {BackgroundTransparency = 1}):Play() end)
+        
+        OptBtn.MouseButton1Click:Connect(function()
+            isOpen = false
+            TweenService:Create(DropdownContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 36)}):Play()
+            TweenService:Create(Icon, TweenInfoFast, {Rotation = 0}):Play()
+            
+            Title.Text = text .. ": " .. tostring(opt)
+            for _, child in ipairs(OptionsFrame:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child.TextLabel.TextColor3 = Theme.TextSecondaryColor
+                end
+            end
+            OptLabel.TextColor3 = Theme.AccentEnd
+            if callback then callback(opt) end
+        end)
+    end
+    
+    MainBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            TweenService:Create(DropdownContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, totalHeight)}):Play()
+            TweenService:Create(Icon, TweenInfoFast, {Rotation = 180}):Play()
+        else
+            TweenService:Create(DropdownContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 36)}):Play()
+            TweenService:Create(Icon, TweenInfoFast, {Rotation = 0}):Play()
+        end
+    end)
+    
+    return DropdownContainer
+end
+
+function Framework:CreateMultiDropdown(parentSection, text, options, defaultOptionsTable, callback)
+    local selectedTable = {}
+    for _, v in ipairs(defaultOptionsTable or {}) do selectedTable[v] = true end
+    
+    local function getSelectedString()
+        local str = ""
+        for k, v in pairs(selectedTable) do
+            if v then str = str .. k .. ", " end
+        end
+        if str == "" then return "None" end
+        return string.sub(str, 1, -3)
+    end
+
+    local DropdownContainer = Instance.new("Frame")
+    DropdownContainer.Size = UDim2.new(1, 0, 0, 36)
+    DropdownContainer.BackgroundColor3 = Theme.WindowBackground
+    DropdownContainer.BackgroundTransparency = 0.5
+    DropdownContainer.ClipsDescendants = true
+    DropdownContainer.ZIndex = 4
+    DropdownContainer.Parent = parentSection
+    applyCorner(DropdownContainer)
+    applyStroke(DropdownContainer)
+    
+    local MainBtn = Instance.new("TextButton")
+    MainBtn.Size = UDim2.new(1, 0, 0, 36)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = ""
+    MainBtn.ZIndex = 5
+    MainBtn.Parent = DropdownContainer
+    
+    local Title = createTextLabel(text .. ": " .. getSelectedString(), UDim2.new(1, -30, 1, 0), UDim2.new(0, 15, 0, 0))
+    Title.TextSize = 13
+    Title.ZIndex = 5
+    Title.Parent = MainBtn
+    
+    local Icon = Instance.new("ImageLabel")
+    Icon.Size = UDim2.new(0, 14, 0, 14)
+    Icon.AnchorPoint = Vector2.new(1, 0.5)
+    Icon.Position = UDim2.new(1, -15, 0.5, 0)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://6031091004"
+    Icon.ImageColor3 = Theme.TextSecondaryColor
+    Icon.ZIndex = 5
+    Icon.Parent = MainBtn
+    
+    local OptionsFrame = Instance.new("Frame")
+    OptionsFrame.Size = UDim2.new(1, 0, 1, -36)
+    OptionsFrame.Position = UDim2.new(0, 0, 0, 36)
+    OptionsFrame.BackgroundTransparency = 1
+    OptionsFrame.ZIndex = 5
+    OptionsFrame.Parent = DropdownContainer
+    
+    local OptionLayout = Instance.new("UIListLayout")
+    OptionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    OptionLayout.Parent = OptionsFrame
+    
+    local isOpen = false
+    local totalHeight = 36
+    
+    for _, opt in ipairs(options) do
+        local OptBtn = Instance.new("TextButton")
+        OptBtn.Size = UDim2.new(1, 0, 0, 30)
+        OptBtn.BackgroundColor3 = Theme.ElementHover
+        OptBtn.BackgroundTransparency = 1
+        OptBtn.Text = ""
+        OptBtn.ZIndex = 5
+        OptBtn.Parent = OptionsFrame
+        totalHeight = totalHeight + 30
+        
+        local OptLabel = createTextLabel(tostring(opt), UDim2.new(1, -30, 1, 0), UDim2.new(0, 20, 0, 0))
+        OptLabel.TextSize = 13
+        OptLabel.TextColor3 = selectedTable[opt] and Theme.AccentEnd or Theme.TextSecondaryColor
+        OptLabel.ZIndex = 5
+        OptLabel.Parent = OptBtn
+        
+        OptBtn.MouseEnter:Connect(function() TweenService:Create(OptBtn, TweenInfoFast, {BackgroundTransparency = 0.5}):Play() end)
+        OptBtn.MouseLeave:Connect(function() TweenService:Create(OptBtn, TweenInfoFast, {BackgroundTransparency = 1}):Play() end)
+        
+        OptBtn.MouseButton1Click:Connect(function()
+            selectedTable[opt] = not selectedTable[opt]
+            OptLabel.TextColor3 = selectedTable[opt] and Theme.AccentEnd or Theme.TextSecondaryColor
+            Title.Text = text .. ": " .. getSelectedString()
+            if callback then callback(selectedTable) end
+        end)
+    end
+    
+    MainBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        if isOpen then
+            TweenService:Create(DropdownContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, totalHeight)}):Play()
+            TweenService:Create(Icon, TweenInfoFast, {Rotation = 180}):Play()
+        else
+            TweenService:Create(DropdownContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 36)}):Play()
+            TweenService:Create(Icon, TweenInfoFast, {Rotation = 0}):Play()
+        end
+    end)
+    
+    return DropdownContainer
 end
 
 return Framework

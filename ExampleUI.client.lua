@@ -10,57 +10,48 @@ if not success then
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "KarpiwareHub"
+ScreenGui.Name = "UpscaledKarpiwareHub"
 ScreenGui.ResetOnSpawn = false
 
 local envSuccess, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = envSuccess and coreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local UI = UIFramework.new()
-local Window = UI:CreateWindow(ScreenGui, "Karpiware 0.1.0", "Super Cool Exploit Interface")
+local Window = UI:CreateWindow(ScreenGui, "Modern Hub", "Fluid & Animated Interface")
 
--- TABS (Exact match from screenshot)
-local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373") -- target/crosshair
-local AntiAimTab = UI:CreateTab(Window, "Anti-Aim", "rbxassetid://7059346373")
-local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://7059346373")
-local SkinsTab = UI:CreateTab(Window, "Skins", "rbxassetid://7059346373")
-local MiscTab = UI:CreateTab(Window, "Miscellaneous", "rbxassetid://7059346373")
-local ConfigsTab = UI:CreateTab(Window, "Configs", "rbxassetid://7059346373")
-local ScriptsTab = UI:CreateTab(Window, "Scripts", "rbxassetid://7059346373")
+local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373")
+local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://6031290374")
 
--- LEGITBOT TAB PROPERTIES (From red circles) --
-
--- Top Left Box (No Title)
+-- LEGITBOT TAB PROPERTIES
 local TopLeft = UI:CreateSection(LegitbotTab, nil, "Left")
 UI:CreateToggle(TopLeft, "Aimbot enabled", false)
-UI:CreateToggle(TopLeft, "Silent aim", false)
-UI:CreateSlider(TopLeft, "Field of view", 0, 360, 180)
-UI:CreateToggle(TopLeft, "Override resolver", false)
 
--- Top Right Box (No Title)
+-- DROPDOWN EXAMPLES
+UI:CreateDropdown(TopLeft, "Hitbox", {"Head", "Neck", "Torso", "Legs"}, "Head", function(selected)
+    print("Aimbot Hitbox changed to:", selected)
+end)
+
+UI:CreateMultiDropdown(TopLeft, "Target Selection", {"Distance", "Health", "FOV", "Threat"}, {"FOV"}, function(selectedList)
+    print("Multi Target Selection changed")
+    for k, v in pairs(selectedList) do
+        if v then print("- Selected:", k) end
+    end
+end)
+
+UI:CreateSlider(TopLeft, "Field of view", 0, 360, 180)
+
 local TopRight = UI:CreateSection(LegitbotTab, nil, "Right")
 UI:CreateSlider(TopRight, "Minimum damage", 0, 100, 30)
 UI:CreateToggle(TopRight, "Automatic penetration", true)
-UI:CreateToggle(TopRight, "Force body aim", false)
-UI:CreateToggle(TopRight, "Delay shot", false)
--- Extra options faintly visible below "Delay shot"
-UI:CreateToggle(TopRight, "Hitchance", false)
-UI:CreateToggle(TopRight, "Multiple hitbox...", false)
-UI:CreateToggle(TopRight, "Auto stop condition...", false)
 
--- Bottom Left Box
-local BottomLeft = UI:CreateSection(LegitbotTab, nil, "Left")
-UI:CreateToggle(BottomLeft, "Autostrafe", false)
-UI:CreateSlider(BottomLeft, "Strafe speed", 0, 100, 50)
-UI:CreateToggle(BottomLeft, "Strafe point scale", false)
-UI:CreateSlider(BottomLeft, "Strafe scale", 0, 100, 70)
-UI:CreateSlider(BottomLeft, "Strafe p. scale", 0, 100, 60)
-UI:CreateToggle(BottomLeft, "Force directional...", false)
+-- VISUALS TAB
+local EspSection = UI:CreateSection(VisualsTab, "ESP", "Left")
+UI:CreateToggle(EspSection, "Box ESP", true)
+UI:CreateMultiDropdown(EspSection, "Filter", {"Enemies", "Teammates", "NPCs", "Items"}, {"Enemies", "Items"}, function(sel)
+    print("ESP Filter updated")
+end)
 
--- Bottom Right Box
-local BottomRight = UI:CreateSection(LegitbotTab, nil, "Right")
-UI:CreateToggle(BottomRight, "Double tap", false)
-UI:CreateToggle(BottomRight, "Hide shots", false)
-UI:CreateSlider(BottomRight, "Expand fake lag limit", 0, 14, 14)
+local SettingsSection = UI:CreateSection(VisualsTab, "System", "Right")
+UI:CreateButton(SettingsSection, "Arayüzü Kapat", function() ScreenGui:Destroy() end)
 
-print("Karpiware exact match UI loaded successfully!")
+print("Dropdown components UI loaded successfully!")
