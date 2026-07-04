@@ -5,34 +5,34 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- Theme & Design Constants (Upscaled, Differentiated Modern Style)
+-- Theme & Design Constants (Simplified, Sleek, Classic Premium Style)
 local Theme = {
-    WindowBackground = Color3.fromRGB(16, 16, 20),
-    SidebarBackground = Color3.fromRGB(10, 10, 14),
-    SectionBackground = Color3.fromRGB(22, 22, 28),
+    WindowBackground = Color3.fromRGB(20, 20, 25),
+    SidebarBackground = Color3.fromRGB(16, 16, 21),
+    SectionBackground = Color3.fromRGB(26, 26, 32),
     
-    WindowTransparency = 0.1, -- Very slight glass
-    SidebarTransparency = 0.2,
-    SectionTransparency = 0.05,
+    WindowTransparency = 0, -- Solid, clean look
+    SidebarTransparency = 0,
+    SectionTransparency = 0,
     
-    ElementHover = Color3.fromRGB(32, 32, 40),
-    TabSelected = Color3.fromRGB(32, 32, 40),
+    ElementHover = Color3.fromRGB(36, 36, 42),
+    TabSelected = Color3.fromRGB(36, 36, 42),
     
-    -- Differentiated Accent: Cyberpunk/Modern Neon Pink to Cyan
-    AccentStart = Color3.fromRGB(255, 60, 150),
-    AccentEnd = Color3.fromRGB(0, 200, 255),
+    -- Sleek Blue Accent (No crazy neon)
+    AccentStart = Color3.fromRGB(80, 140, 255),
+    AccentEnd = Color3.fromRGB(80, 140, 255),
     
-    ToggleOff = Color3.fromRGB(35, 35, 42),
+    ToggleOff = Color3.fromRGB(40, 40, 48),
     
-    TextColor = Color3.fromRGB(250, 250, 250),
-    TextSecondaryColor = Color3.fromRGB(130, 130, 140),
+    TextColor = Color3.fromRGB(240, 240, 240),
+    TextSecondaryColor = Color3.fromRGB(150, 150, 160),
     
-    BorderColor = Color3.fromRGB(40, 40, 50),
-    BorderTransparency = 0.1,
+    BorderColor = Color3.fromRGB(45, 45, 55),
+    BorderTransparency = 0,
     
     Font = Enum.Font.GothamMedium,
     BoldFont = Enum.Font.GothamBold,
-    CornerRadius = UDim.new(0, 10) -- Slightly rounder
+    CornerRadius = UDim.new(0, 6) -- Sharper, cleaner corners
 }
 
 local TweenInfoFast = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -97,23 +97,22 @@ function Framework.new()
 end
 
 function Framework:CreateWindow(screenGui, titleText, subtitleText)
-    -- Main Window Frame (Upscaled)
+    -- Main Window Frame (Slightly reduced for neatness)
     local Window = Instance.new("Frame")
-    Window.Name = "UpscaledModernWindow"
-    Window.Size = UDim2.new(0, 780, 0, 520) -- Bigger
-    Window.Position = UDim2.new(0.5, -390, 0.5, -260)
+    Window.Name = "SleekModernWindow"
+    Window.Size = UDim2.new(0, 700, 0, 480)
+    Window.Position = UDim2.new(0.5, -350, 0.5, -240)
     Window.BackgroundColor3 = Theme.WindowBackground
     Window.BackgroundTransparency = Theme.WindowTransparency
     Window.BorderSizePixel = 0
     Window.Parent = screenGui
     applyCorner(Window)
     applyStroke(Window)
-    applyGlow(Window) -- Unique touch
     
     -- Sidebar (Upscaled)
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 210, 1, 0) -- Wider
+    Sidebar.Size = UDim2.new(0, 190, 1, 0)
     Sidebar.BackgroundColor3 = Theme.SidebarBackground
     Sidebar.BackgroundTransparency = Theme.SidebarTransparency
     Sidebar.BorderSizePixel = 0
@@ -249,8 +248,8 @@ function Framework:CreateWindow(screenGui, titleText, subtitleText)
     -- Content Area
     local ContentArea = Instance.new("Frame")
     ContentArea.Name = "ContentArea"
-    ContentArea.Size = UDim2.new(1, -210, 1, 0)
-    ContentArea.Position = UDim2.new(0, 210, 0, 0)
+    ContentArea.Size = UDim2.new(1, -190, 1, 0)
+    ContentArea.Position = UDim2.new(0, 190, 0, 0)
     ContentArea.BackgroundTransparency = 1
     ContentArea.ZIndex = 2
     ContentArea.Parent = Window
@@ -881,11 +880,11 @@ end
 function Framework:CreateColorPicker(parentSection, text, defaultColor, callback)
     defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
     local currentColor = defaultColor
+    local hue, sat, val = Color3.toHSV(defaultColor)
     
     local ColorContainer = Instance.new("Frame")
     ColorContainer.Size = UDim2.new(1, 0, 0, 36)
     ColorContainer.BackgroundColor3 = Theme.WindowBackground
-    ColorContainer.BackgroundTransparency = 0.5
     ColorContainer.ClipsDescendants = true
     ColorContainer.ZIndex = 4
     ColorContainer.Parent = parentSection
@@ -915,94 +914,138 @@ function Framework:CreateColorPicker(parentSection, text, defaultColor, callback
     applyStroke(PreviewColor, Color3.fromRGB(0,0,0), 0.5)
     
     local PickerArea = Instance.new("Frame")
-    PickerArea.Size = UDim2.new(1, 0, 0, 90)
+    PickerArea.Size = UDim2.new(1, 0, 0, 160)
     PickerArea.Position = UDim2.new(0, 0, 0, 36)
     PickerArea.BackgroundTransparency = 1
     PickerArea.ZIndex = 5
     PickerArea.Parent = ColorContainer
     
-    local function createRGBSlider(yPos, colorName, maxColor)
-        local Track = Instance.new("TextButton")
-        Track.Text = ""
-        Track.Size = UDim2.new(1, -30, 0, 14)
-        Track.Position = UDim2.new(0, 15, 0, yPos)
-        Track.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        Track.ZIndex = 6
-        Track.Parent = PickerArea
-        applyCorner(Track, UDim.new(0, 4))
-        
-        local UIGradient = Instance.new("UIGradient")
-        UIGradient.Color = ColorSequence.new(Color3.fromRGB(0,0,0), maxColor)
-        UIGradient.Parent = Track
-        
-        local Marker = Instance.new("Frame")
-        Marker.Size = UDim2.new(0, 4, 1, 4)
-        Marker.AnchorPoint = Vector2.new(0.5, 0.5)
-        Marker.Position = UDim2.new(1, 0, 0.5, 0)
-        Marker.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        Marker.ZIndex = 7
-        Marker.Parent = Track
-        applyStroke(Marker, Color3.fromRGB(0,0,0), 0)
-        
-        return Track, Marker
-    end
+    -- Color Wheel Image
+    local Wheel = Instance.new("ImageButton")
+    Wheel.Size = UDim2.new(0, 140, 0, 140)
+    Wheel.Position = UDim2.new(0, 15, 0, 10)
+    Wheel.BackgroundTransparency = 1
+    Wheel.Image = "rbxassetid://6020110098" -- Standard Color Wheel
+    Wheel.ZIndex = 6
+    Wheel.Parent = PickerArea
     
-    local rTrack, rMarker = createRGBSlider(10, "R", Color3.fromRGB(255, 0, 0))
-    local gTrack, gMarker = createRGBSlider(35, "G", Color3.fromRGB(0, 255, 0))
-    local bTrack, bMarker = createRGBSlider(60, "B", Color3.fromRGB(0, 0, 255))
+    local WheelPicker = Instance.new("Frame")
+    WheelPicker.Size = UDim2.new(0, 6, 0, 6)
+    WheelPicker.AnchorPoint = Vector2.new(0.5, 0.5)
+    WheelPicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    WheelPicker.ZIndex = 7
+    WheelPicker.Parent = Wheel
+    applyCorner(WheelPicker, UDim.new(1, 0))
+    applyStroke(WheelPicker, Color3.fromRGB(0,0,0), 0)
     
-    local function updateColor()
+    -- Value Slider (Brightness)
+    local ValSlider = Instance.new("TextButton")
+    ValSlider.Text = ""
+    ValSlider.Size = UDim2.new(0, 20, 0, 140)
+    ValSlider.Position = UDim2.new(0, 170, 0, 10)
+    ValSlider.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    ValSlider.ZIndex = 6
+    ValSlider.Parent = PickerArea
+    applyCorner(ValSlider, UDim.new(0, 4))
+    
+    local ValGradient = Instance.new("UIGradient")
+    ValGradient.Rotation = 90
+    ValGradient.Parent = ValSlider
+    
+    local ValMarker = Instance.new("Frame")
+    ValMarker.Size = UDim2.new(1, 4, 0, 4)
+    ValMarker.AnchorPoint = Vector2.new(0.5, 0.5)
+    ValMarker.Position = UDim2.new(0.5, 0, 1 - val, 0)
+    ValMarker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ValMarker.ZIndex = 7
+    ValMarker.Parent = ValSlider
+    applyStroke(ValMarker, Color3.fromRGB(0,0,0), 0)
+    
+    local function updateVisuals()
+        currentColor = Color3.fromHSV(hue, sat, val)
         PreviewColor.BackgroundColor3 = currentColor
+        ValGradient.Color = ColorSequence.new(Color3.fromHSV(hue, sat, 1), Color3.fromRGB(0, 0, 0))
+        
+        -- Update Wheel Picker Position
+        local angle = hue * math.pi * 2
+        local radius = sat * (Wheel.AbsoluteSize.X / 2)
+        local cx = Wheel.AbsoluteSize.X / 2
+        local cy = Wheel.AbsoluteSize.Y / 2
+        local x = cx + math.cos(angle) * radius
+        local y = cy + math.sin(angle) * radius
+        WheelPicker.Position = UDim2.new(0, x, 0, y)
+        
+        -- Update Value Marker Position
+        ValMarker.Position = UDim2.new(0.5, 0, 1 - val, 0)
+        
         if callback then callback(currentColor) end
     end
     
-    local function updateMarkers()
-        rMarker.Position = UDim2.new(currentColor.R, 0, 0.5, 0)
-        gMarker.Position = UDim2.new(currentColor.G, 0, 0.5, 0)
-        bMarker.Position = UDim2.new(currentColor.B, 0, 0.5, 0)
-    end
-    updateMarkers()
+    -- Wait for UI to render to set initial wheel picker position accurately
+    task.spawn(function()
+        task.wait(0.1)
+        updateVisuals()
+    end)
     
-    local function bindSlider(track, component)
-        local dragging = false
-        track.MouseButton1Down:Connect(function() dragging = true end)
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local relativeX = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-                local r, g, b = currentColor.R, currentColor.G, currentColor.B
-                if component == "R" then r = relativeX
-                elseif component == "G" then g = relativeX
-                elseif component == "B" then b = relativeX end
-                currentColor = Color3.new(r, g, b)
-                updateMarkers()
-                updateColor()
-            end
-        end)
-        -- Support click without dragging
-        track.MouseButton1Click:Connect(function()
-            local relativeX = math.clamp((Players.LocalPlayer:GetMouse().X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            local r, g, b = currentColor.R, currentColor.G, currentColor.B
-            if component == "R" then r = relativeX
-            elseif component == "G" then g = relativeX
-            elseif component == "B" then b = relativeX end
-            currentColor = Color3.new(r, g, b)
-            updateMarkers()
-            updateColor()
-        end)
+    local draggingWheel = false
+    Wheel.MouseButton1Down:Connect(function() draggingWheel = true end)
+    
+    local draggingVal = false
+    ValSlider.MouseButton1Down:Connect(function() draggingVal = true end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingWheel = false
+            draggingVal = false
+        end
+    end)
+    
+    local function updateWheelInput(inputPos)
+        local cx = Wheel.AbsolutePosition.X + (Wheel.AbsoluteSize.X / 2)
+        local cy = Wheel.AbsolutePosition.Y + (Wheel.AbsoluteSize.Y / 2)
+        local dx = inputPos.X - cx
+        local dy = inputPos.Y - cy
+        
+        local angle = math.atan2(dy, dx)
+        local distance = math.sqrt(dx^2 + dy^2)
+        local maxRadius = Wheel.AbsoluteSize.X / 2
+        
+        sat = math.clamp(distance / maxRadius, 0, 1)
+        hue = (angle + math.pi) / (math.pi * 2) -- Map -pi..pi to 0..1
+        -- Re-adjust hue since atan2 might be offset depending on the image. Typical wheels have red at 0.
+        hue = (hue + 0.5) % 1
+        
+        updateVisuals()
     end
     
-    bindSlider(rTrack, "R")
-    bindSlider(gTrack, "G")
-    bindSlider(bTrack, "B")
+    local function updateValInput(inputPos)
+        local y = inputPos.Y - ValSlider.AbsolutePosition.Y
+        val = 1 - math.clamp(y / ValSlider.AbsoluteSize.Y, 0, 1)
+        updateVisuals()
+    end
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if draggingWheel then updateWheelInput(input.Position) end
+            if draggingVal then updateValInput(input.Position) end
+        end
+    end)
+    
+    Wheel.MouseButton1Click:Connect(function()
+        local pos = UserInputService:GetMouseLocation()
+        -- Adjust for GUI inset
+        updateWheelInput(Vector2.new(pos.X, pos.Y - 36))
+    end)
+    ValSlider.MouseButton1Click:Connect(function()
+        local pos = UserInputService:GetMouseLocation()
+        updateValInput(Vector2.new(pos.X, pos.Y - 36))
+    end)
     
     local isOpen = false
     MainBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if isOpen then
-            TweenService:Create(ColorContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 126)}):Play()
+            TweenService:Create(ColorContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 196)}):Play()
         else
             TweenService:Create(ColorContainer, TweenInfoFast, {Size = UDim2.new(1, 0, 0, 36)}):Play()
         end
