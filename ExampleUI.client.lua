@@ -1,12 +1,14 @@
 local Players = game:GetService("Players")
 
+-- 1. Framework'ü Yükle
+local url = "https://raw.githubusercontent.com/GeceUstasi/roblox-ui-framework/master/UI.lua?t=" .. tostring(tick())
 local success, UIFramework = pcall(function()
-    return require(script.Parent:WaitForChild("UI"))
+    return loadstring(game:HttpGet(url))()
 end)
 
 if not success then
-    warn("Could not require UI module locally. Make sure it's named UI.lua")
-    return
+    -- Lokal test için (GitHub'dan çekemezse dosyadan oku)
+    UIFramework = require(script.Parent:WaitForChild("UI"))
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -18,103 +20,165 @@ ScreenGui.Parent = envSuccess and coreGui or Players.LocalPlayer:WaitForChild("P
 
 local UI = UIFramework.new()
 
--- OPTIONAL KEY SYSTEM (Key System'i devre disi birakmak icin bu blogu silin)
-local KEY_SYSTEM_ENABLED = false -- true yaparsaniz key gerekir
-if KEY_SYSTEM_ENABLED then
-    UI:CreateKeySystem(ScreenGui, {"PREMIUM-2025", "VIP-KEY"}, function()
-        -- Key basarili, hub yukleniyor
-        loadHub()
+-- =====================================================================
+-- 2. KEY SYSTEM (İsteğe Bağlı)
+-- =====================================================================
+local USE_KEY_SYSTEM = false
+
+if USE_KEY_SYSTEM then
+    UI:CreateKeySystem(ScreenGui, {"PREMIUM-2025", "VIP"}, function()
+        -- Doğru şifre girilince arayüzü başlat
+        LoadInterface()
     end, {
-        Title = "Premium Hub Key",
-        Subtitle = "Devam etmek icin gecerli bir anahtar girin.",
+        Title = "Karpiware Premium",
+        Subtitle = "Devam etmek için şifre girin. (Şifre: VIP)",
         MaxAttempts = 3
     })
-    return
+else
+    -- Direkt başlat
+    LoadInterface()
 end
 
--- WATERMARK (Sol ust kose FPS gostergesi)
-UI:CreateWatermark(ScreenGui, "Premium Hub v2.0")
+-- =====================================================================
+-- 3. ANA ARAYÜZ (LoadInterface Fonksiyonu)
+-- =====================================================================
+function LoadInterface()
+    -- Watermark & FPS
+    UI:CreateWatermark(ScreenGui, "Premium Hub v2.0")
 
--- ANA PENCERE
-local Window = UI:CreateWindow(ScreenGui, "Premium Hub", "Full-Feature Showcase")
+    -- Pencere (Sürüklenebilir, Küçültülebilir)
+    local Window = UI:CreateWindow(ScreenGui, "Premium Hub", "Ultimate Feature Showcase")
+    
+    -- Config değerlerini tutmak için Window'u hazırlayalım (Otomatik yapılıyor)
 
--- SEKMELER
-local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373")
-local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://6031290374")
+    -- Sekmeler
+    local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373")
+    local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://6031290374")
+    local SettingsTab = UI:CreateTab(Window, "Settings", "rbxassetid://7059346373")
 
--- ═══════════════════════════════════════════════════
--- LEGITBOT SEKMESI
--- ═══════════════════════════════════════════════════
-local AimbotSection = UI:CreateSection(LegitbotTab, "Aimbot", "Left")
-
-UI:CreateToggle(AimbotSection, "Aimbot enabled", false)
-
-UI:CreateKeybind(AimbotSection, "Aimbot Key", Enum.KeyCode.F, function(key, isPressed)
-    if isPressed then
-        print("Aimbot key pressed:", key)
-    end
-end)
-
-UI:CreateDropdown(AimbotSection, "Hitbox", {"Head", "Neck", "Torso", "Legs"}, "Head", function(selected)
-    print("Hitbox:", selected)
-end)
-
-UI:CreateSeparator(AimbotSection)
-
-UI:CreateSlider(AimbotSection, "Field of view", 0, 360, 180)
-
--- Sag kolon
-local SettingsSection = UI:CreateSection(LegitbotTab, "Settings", "Right")
-
-UI:CreateMultiDropdown(SettingsSection, "Target", {"Distance", "Health", "FOV", "Threat"}, {"FOV"}, function(sel) end)
-
-UI:CreateTextBox(SettingsSection, "Webhook", "URL girin...", false, function(text)
-    print("Webhook:", text)
-end)
-
-UI:CreateLabel(SettingsSection, "RightShift ile gizle/goster")
-
--- ═══════════════════════════════════════════════════
--- VISUALS SEKMESI
--- ═══════════════════════════════════════════════════
-local EspSection = UI:CreateSection(VisualsTab, "ESP", "Left")
-
-UI:CreateToggle(EspSection, "Box ESP", true)
-
-UI:CreateColorPicker(EspSection, "Box Color", Color3.fromRGB(0, 255, 150), function(color)
-    print("Box color:", color)
-end)
-
-UI:CreateColorPicker(EspSection, "Name Color", Color3.fromRGB(255, 255, 0), function(color)
-    print("Name color:", color)
-end)
-
-local SystemSection = UI:CreateSection(VisualsTab, "System", "Right")
-
-UI:CreateButton(SystemSection, "Bildirim Goster", function()
-    UI:Notify(ScreenGui, "Basarili!", "Bildirim sistemi calisiyor.", 3)
-end)
-
-UI:CreateButton(SystemSection, "Dialog Goster", function()
-    UI:CreateDialog(ScreenGui, "Uyari", "Tum ayarlari sifirlamak istiyor musunuz?", function()
-        print("Evet tiklandi")
-        UI:Notify(ScreenGui, "Sifirlandi", "Tum ayarlar varsayilana dondu.", 3)
-    end, function()
-        print("Hayir tiklandi")
+    -- ==========================================
+    -- LEGITBOT SEKMESİ
+    -- ==========================================
+    local AimbotSection = UI:CreateSection(LegitbotTab, "Aimbot", "Left")
+    
+    -- Toggle
+    local aimbotToggle = UI:CreateToggle(AimbotSection, "Aimbot enabled", false)
+    UI:AddTooltip(aimbotToggle, "Aimbot'u açıp kapatır.") -- Tooltip örneği
+    
+    -- Keybind
+    UI:CreateKeybind(AimbotSection, "Aimbot Key", Enum.KeyCode.F, function(key, isPressed)
+        if isPressed then print("Aimbot tuşuna basıldı:", key) end
     end)
-end)
-
-UI:CreateSeparator(SystemSection)
-
-UI:CreateButton(SystemSection, "Arayuzu Kapat", function()
-    UI:CreateDialog(ScreenGui, "Cikis", "Arayuzu kapatmak istediginizden emin misiniz?", function()
-        ScreenGui:Destroy()
+    
+    UI:CreateSeparator(AimbotSection) -- Ayırıcı Çizgi
+    
+    -- Dropdown
+    UI:CreateDropdown(AimbotSection, "Hitbox", {"Head", "Neck", "Torso"}, "Head", function(selected)
+        print("Hitbox değişti:", selected)
+        Window._configValues["Hitbox"] = selected -- Config için manuel kayıt örneği
     end)
-end)
+    
+    -- MultiDropdown
+    UI:CreateMultiDropdown(AimbotSection, "Targeting", {"Distance", "Health", "FOV"}, {"FOV"}, function(selectedList)
+        print("Çoklu seçim değişti")
+    end)
+    
+    local WeaponSection = UI:CreateSection(LegitbotTab, "Weapon", "Right")
+    
+    -- Slider
+    UI:CreateSlider(WeaponSection, "Field of view", 0, 360, 180)
+    UI:CreateSlider(WeaponSection, "Smoothing", 1, 10, 5)
 
--- Baslangiç bildirimi
-task.delay(1, function()
-    UI:Notify(ScreenGui, "Hosgeldiniz!", "Premium Hub basariyla yuklendi.", 4)
-end)
+    -- ==========================================
+    -- VISUALS SEKMESİ
+    -- ==========================================
+    local EspSection = UI:CreateSection(VisualsTab, "ESP", "Left")
+    
+    UI:CreateToggle(EspSection, "Box ESP", true)
+    
+    -- ColorPicker (Renk Çarkı)
+    UI:CreateColorPicker(EspSection, "Box Color", Color3.fromRGB(0, 255, 150), function(color)
+        print("ESP Rengi:", color)
+    end)
+    
+    UI:CreateSeparator(EspSection)
+    
+    UI:CreateColorPicker(EspSection, "Name Color", Color3.fromRGB(255, 255, 0), function(color) end)
 
-print("Complete Premium Hub loaded! Press RightShift to toggle visibility.")
+    local InfoSection = UI:CreateSection(VisualsTab, "Information", "Right")
+    UI:CreateToggle(InfoSection, "Show Health", true)
+    UI:CreateToggle(InfoSection, "Show Distance", true)
+
+    -- ==========================================
+    -- SETTINGS SEKMESİ
+    -- ==========================================
+    local SystemSection = UI:CreateSection(SettingsTab, "System", "Left")
+    
+    -- TextBox
+    UI:CreateTextBox(SystemSection, "Webhook URL", "https://discord...", false, function(text)
+        print("Webhook URL kaydedildi:", text)
+    end)
+    
+    UI:CreateSeparator(SystemSection)
+    
+    -- Label & Buton
+    UI:CreateLabel(SystemSection, "Gelişmiş ayarlar")
+    
+    -- Bildirim (Notification)
+    UI:CreateButton(SystemSection, "Test Bildirimi", function()
+        UI:Notify(ScreenGui, "Başarılı", "Bildirim sistemi kusursuz çalışıyor!", 3)
+    end)
+    
+    -- Dialog (Onay Kutusu)
+    UI:CreateButton(SystemSection, "Ayarları Sıfırla", function()
+        UI:CreateDialog(ScreenGui, "Uyarı", "Tüm ayarları sıfırlamak istiyor musunuz?", 
+        function() -- Evet'e basılırsa
+            UI:Notify(ScreenGui, "Sıfırlandı", "Ayarlar varsayılana döndü.", 3)
+        end, 
+        function() -- Hayır'a basılırsa
+            print("İptal edildi.")
+        end)
+    end)
+    
+    local ConfigSection = UI:CreateSection(SettingsTab, "Config", "Right")
+    
+    -- Config Sistemi (Save / Load)
+    UI:CreateTextBox(ConfigSection, "Config Adı", "default", false, function(text)
+        Window._configValues["ConfigName"] = text
+    end)
+    
+    UI:CreateButton(ConfigSection, "Kaydet (Save)", function()
+        local name = Window._configValues["ConfigName"] or "default"
+        local success = UI:SaveConfig(Window, name)
+        if success then
+            UI:Notify(ScreenGui, "Config", name .. " başarıyla kaydedildi!", 3)
+        else
+            UI:Notify(ScreenGui, "Hata", "Config kaydedilemedi (Executor desteklemiyor olabilir).", 3)
+        end
+    end)
+    
+    UI:CreateButton(ConfigSection, "Yükle (Load)", function()
+        local name = Window._configValues["ConfigName"] or "default"
+        local success, data = UI:LoadConfig(Window, name)
+        if success then
+            UI:Notify(ScreenGui, "Config", name .. " yüklendi!", 3)
+            print("Yüklenen veri:", data)
+        else
+            UI:Notify(ScreenGui, "Hata", "Config bulunamadı.", 3)
+        end
+    end)
+    
+    UI:CreateSeparator(ConfigSection)
+    
+    -- Arayüzü Kapatma Dialog'u
+    UI:CreateButton(ConfigSection, "Arayüzü Kapat", function()
+        UI:CreateDialog(ScreenGui, "Çıkış", "Premium Hub'ı kapatmak istiyor musunuz?", function()
+            ScreenGui:Destroy()
+        end)
+    end)
+
+    -- Başlangıç Bildirimi
+    task.delay(1, function()
+        UI:Notify(ScreenGui, "Premium Hub", "Arayüz yüklendi. Gizlemek için RightShift'e basın.", 5)
+    end)
+end
