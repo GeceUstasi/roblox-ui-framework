@@ -4,6 +4,8 @@ Framework.__index = Framework
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
 -- Theme & Design Constants (Balanced Modern Premium Style)
 local Theme = {
@@ -255,13 +257,105 @@ function Framework:CreateWindow(screenGui, titleText, subtitleText)
     ContentArea.ZIndex = 2
     ContentArea.Parent = Window
     
+    -- Window Dragging
+    local dragging, dragInput, dragStart, startPos
+    TitleArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Window.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    TitleArea.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            Window.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Minimize & Close Buttons (top-right of content area)
+    local WindowControls = Instance.new("Frame")
+    WindowControls.Size = UDim2.new(0, 60, 0, 30)
+    WindowControls.AnchorPoint = Vector2.new(1, 0)
+    WindowControls.Position = UDim2.new(1, -10, 0, 10)
+    WindowControls.BackgroundTransparency = 1
+    WindowControls.ZIndex = 10
+    WindowControls.Parent = Window
+    
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+    CloseBtn.Position = UDim2.new(1, -24, 0, 0)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    CloseBtn.BackgroundTransparency = 0.6
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Theme.TextColor
+    CloseBtn.TextSize = 16
+    CloseBtn.Font = Theme.BoldFont
+    CloseBtn.ZIndex = 10
+    CloseBtn.Parent = WindowControls
+    applyCorner(CloseBtn, UDim.new(0, 6))
+    CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfoFast, {BackgroundTransparency = 0}):Play() end)
+    CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfoFast, {BackgroundTransparency = 0.6}):Play() end)
+    CloseBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+    
+    local MinBtn = Instance.new("TextButton")
+    MinBtn.Size = UDim2.new(0, 24, 0, 24)
+    MinBtn.Position = UDim2.new(1, -52, 0, 0)
+    MinBtn.BackgroundColor3 = Theme.ElementHover
+    MinBtn.BackgroundTransparency = 0.6
+    MinBtn.Text = "−"
+    MinBtn.TextColor3 = Theme.TextColor
+    MinBtn.TextSize = 16
+    MinBtn.Font = Theme.BoldFont
+    MinBtn.ZIndex = 10
+    MinBtn.Parent = WindowControls
+    applyCorner(MinBtn, UDim.new(0, 6))
+    MinBtn.MouseEnter:Connect(function() TweenService:Create(MinBtn, TweenInfoFast, {BackgroundTransparency = 0}):Play() end)
+    MinBtn.MouseLeave:Connect(function() TweenService:Create(MinBtn, TweenInfoFast, {BackgroundTransparency = 0.6}):Play() end)
+    
+    local minimized = false
+    local savedSize = Window.Size
+    MinBtn.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            savedSize = Window.Size
+            TweenService:Create(Window, TweenInfoFast, {Size = UDim2.new(0, savedSize.X.Offset, 0, 40)}):Play()
+            ContentArea.Visible = false
+            Sidebar.Visible = false
+        else
+            TweenService:Create(Window, TweenInfoFast, {Size = savedSize}):Play()
+            task.delay(0.25, function()
+                ContentArea.Visible = true
+                Sidebar.Visible = true
+            end)
+        end
+    end)
+    
+    -- UI Toggle (RightShift to hide/show)
+    local uiVisible = true
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            uiVisible = not uiVisible
+            screenGui.Enabled = uiVisible
+        end
+    end)
+    
     return {
         Frame = Window,
+        ScreenGui = screenGui,
         TabContainer = TabContainer,
         ContentArea = ContentArea,
         Tabs = {},
         ActiveTab = nil,
-        SettingsButton = SettingsBtn
+        SettingsButton = SettingsBtn,
+        _configValues = {}
     }
 end
 
@@ -1055,4 +1149,405 @@ function Framework:CreateColorPicker(parentSection, text, defaultColor, callback
     return ColorContainer
 end
 
+-- ═══════════════════════════════════════════════════
+-- SEPARATOR
+-- ═══════════════════════════════════════════════════
+function Framework:CreateSeparator(parentSection)
+    local Sep = Instance.new("Frame")
+    Sep.Size = UDim2.new(1, 0, 0, 1)
+    Sep.BackgroundColor3 = Theme.BorderColor
+    Sep.BackgroundTransparency = 0.3
+    Sep.BorderSizePixel = 0
+    Sep.ZIndex = 4
+    Sep.Parent = parentSection
+    return Sep
+end
+
+-- ═══════════════════════════════════════════════════
+-- NOTIFICATION SYSTEM
+-- ═══════════════════════════════════════════════════
+function Framework:Notify(screenGui, title, message, duration)
+    duration = duration or 4
+    
+    -- Find or create notification holder
+    local Holder = screenGui:FindFirstChild("NotificationHolder")
+    if not Holder then
+        Holder = Instance.new("Frame")
+        Holder.Name = "NotificationHolder"
+        Holder.Size = UDim2.new(0, 280, 1, -20)
+        Holder.AnchorPoint = Vector2.new(1, 1)
+        Holder.Position = UDim2.new(1, -15, 1, -10)
+        Holder.BackgroundTransparency = 1
+        Holder.ZIndex = 100
+        Holder.Parent = screenGui
+        
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        layout.Padding = UDim.new(0, 8)
+        layout.Parent = Holder
+    end
+    
+    local NotifFrame = Instance.new("Frame")
+    NotifFrame.Size = UDim2.new(1, 0, 0, 60)
+    NotifFrame.BackgroundColor3 = Theme.SidebarBackground
+    NotifFrame.BackgroundTransparency = 0.1
+    NotifFrame.ZIndex = 100
+    NotifFrame.ClipsDescendants = true
+    NotifFrame.Parent = Holder
+    applyCorner(NotifFrame)
+    applyStroke(NotifFrame)
+    
+    -- Accent line on top
+    local AccLine = Instance.new("Frame")
+    AccLine.Size = UDim2.new(1, 0, 0, 2)
+    AccLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    AccLine.BorderSizePixel = 0
+    AccLine.ZIndex = 101
+    AccLine.Parent = NotifFrame
+    applyGradient(AccLine)
+    
+    local NTitle = createTextLabel(title or "Notification", UDim2.new(1, -20, 0, 20), UDim2.new(0, 12, 0, 8), Enum.TextXAlignment.Left, true)
+    NTitle.TextSize = 13
+    NTitle.ZIndex = 101
+    NTitle.Parent = NotifFrame
+    
+    local NMsg = createTextLabel(message or "", UDim2.new(1, -20, 0, 24), UDim2.new(0, 12, 0, 28), Enum.TextXAlignment.Left, false)
+    NMsg.TextSize = 11
+    NMsg.TextColor3 = Theme.TextSecondaryColor
+    NMsg.TextWrapped = true
+    NMsg.ZIndex = 101
+    NMsg.Parent = NotifFrame
+    
+    -- Progress bar
+    local Progress = Instance.new("Frame")
+    Progress.Size = UDim2.new(1, 0, 0, 2)
+    Progress.Position = UDim2.new(0, 0, 1, -2)
+    Progress.BackgroundColor3 = Theme.AccentEnd
+    Progress.BorderSizePixel = 0
+    Progress.ZIndex = 101
+    Progress.Parent = NotifFrame
+    
+    -- Slide in
+    NotifFrame.Position = UDim2.new(1, 20, 0, 0)
+    TweenService:Create(NotifFrame, TweenInfoFast, {Position = UDim2.new(0, 0, 0, 0)}):Play()
+    
+    -- Progress bar shrink
+    TweenService:Create(Progress, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 0, 2)}):Play()
+    
+    -- Auto-dismiss
+    task.delay(duration, function()
+        TweenService:Create(NotifFrame, TweenInfoFast, {Position = UDim2.new(1, 20, 0, 0)}):Play()
+        task.delay(0.3, function()
+            NotifFrame:Destroy()
+        end)
+    end)
+    
+    return NotifFrame
+end
+
+-- ═══════════════════════════════════════════════════
+-- TOOLTIP
+-- ═══════════════════════════════════════════════════
+function Framework:AddTooltip(guiElement, tooltipText)
+    local Tip = Instance.new("Frame")
+    Tip.Size = UDim2.new(0, 0, 0, 24)
+    Tip.BackgroundColor3 = Theme.SidebarBackground
+    Tip.BackgroundTransparency = 0.05
+    Tip.Visible = false
+    Tip.ZIndex = 200
+    Tip.Parent = guiElement
+    applyCorner(Tip, UDim.new(0, 4))
+    applyStroke(Tip, Theme.BorderColor, 0)
+    
+    local TipLabel = createTextLabel(tooltipText, UDim2.new(1, -12, 1, 0), UDim2.new(0, 6, 0, 0))
+    TipLabel.TextSize = 11
+    TipLabel.TextColor3 = Theme.TextSecondaryColor
+    TipLabel.ZIndex = 201
+    TipLabel.Parent = Tip
+    
+    -- Auto-size
+    local textWidth = #tooltipText * 6 + 16
+    Tip.Size = UDim2.new(0, textWidth, 0, 24)
+    Tip.AnchorPoint = Vector2.new(0.5, 1)
+    Tip.Position = UDim2.new(0.5, 0, 0, -4)
+    
+    guiElement.MouseEnter:Connect(function() Tip.Visible = true end)
+    guiElement.MouseLeave:Connect(function() Tip.Visible = false end)
+    
+    return Tip
+end
+
+-- ═══════════════════════════════════════════════════
+-- DIALOG / PROMPT
+-- ═══════════════════════════════════════════════════
+function Framework:CreateDialog(screenGui, title, message, onConfirm, onCancel)
+    local Overlay = Instance.new("TextButton")
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.5
+    Overlay.Text = ""
+    Overlay.ZIndex = 150
+    Overlay.Parent = screenGui
+    
+    local DialogBox = Instance.new("Frame")
+    DialogBox.Size = UDim2.new(0, 320, 0, 160)
+    DialogBox.AnchorPoint = Vector2.new(0.5, 0.5)
+    DialogBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DialogBox.BackgroundColor3 = Theme.WindowBackground
+    DialogBox.ZIndex = 151
+    DialogBox.Parent = Overlay
+    applyCorner(DialogBox)
+    applyStroke(DialogBox)
+    
+    -- Accent line
+    local AccLine = Instance.new("Frame")
+    AccLine.Size = UDim2.new(1, 0, 0, 2)
+    AccLine.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    AccLine.BorderSizePixel = 0
+    AccLine.ZIndex = 152
+    AccLine.Parent = DialogBox
+    applyGradient(AccLine)
+    
+    local DTitle = createTextLabel(title or "Onay", UDim2.new(1, -30, 0, 25), UDim2.new(0, 15, 0, 12), Enum.TextXAlignment.Left, true)
+    DTitle.TextSize = 16
+    DTitle.ZIndex = 152
+    DTitle.Parent = DialogBox
+    
+    local DMsg = createTextLabel(message or "Emin misiniz?", UDim2.new(1, -30, 0, 40), UDim2.new(0, 15, 0, 42), Enum.TextXAlignment.Left, false)
+    DMsg.TextSize = 13
+    DMsg.TextColor3 = Theme.TextSecondaryColor
+    DMsg.TextWrapped = true
+    DMsg.ZIndex = 152
+    DMsg.Parent = DialogBox
+    
+    -- Buttons
+    local YesBtn = Instance.new("TextButton")
+    YesBtn.Size = UDim2.new(0.45, -10, 0, 34)
+    YesBtn.Position = UDim2.new(0.05, 0, 1, -48)
+    YesBtn.BackgroundColor3 = Theme.AccentEnd
+    YesBtn.Text = "Evet"
+    YesBtn.Font = Theme.BoldFont
+    YesBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    YesBtn.TextSize = 14
+    YesBtn.ZIndex = 152
+    YesBtn.Parent = DialogBox
+    applyCorner(YesBtn, UDim.new(0, 6))
+    
+    local NoBtn = Instance.new("TextButton")
+    NoBtn.Size = UDim2.new(0.45, -10, 0, 34)
+    NoBtn.Position = UDim2.new(0.5, 5, 1, -48)
+    NoBtn.BackgroundColor3 = Theme.ElementHover
+    NoBtn.Text = "Hayir"
+    NoBtn.Font = Theme.BoldFont
+    NoBtn.TextColor3 = Theme.TextColor
+    NoBtn.TextSize = 14
+    NoBtn.ZIndex = 152
+    NoBtn.Parent = DialogBox
+    applyCorner(NoBtn, UDim.new(0, 6))
+    applyStroke(NoBtn)
+    
+    YesBtn.MouseButton1Click:Connect(function()
+        if onConfirm then onConfirm() end
+        Overlay:Destroy()
+    end)
+    NoBtn.MouseButton1Click:Connect(function()
+        if onCancel then onCancel() end
+        Overlay:Destroy()
+    end)
+    Overlay.MouseButton1Click:Connect(function() Overlay:Destroy() end)
+    
+    return Overlay
+end
+
+-- ═══════════════════════════════════════════════════
+-- WATERMARK
+-- ═══════════════════════════════════════════════════
+function Framework:CreateWatermark(screenGui, hubName)
+    local Watermark = Instance.new("Frame")
+    Watermark.Size = UDim2.new(0, 220, 0, 26)
+    Watermark.Position = UDim2.new(0, 15, 0, 10)
+    Watermark.BackgroundColor3 = Theme.WindowBackground
+    Watermark.BackgroundTransparency = 0.15
+    Watermark.ZIndex = 90
+    Watermark.Parent = screenGui
+    applyCorner(Watermark, UDim.new(0, 4))
+    applyStroke(Watermark)
+    
+    local WmLabel = createTextLabel(hubName or "Hub", UDim2.new(1, -12, 1, 0), UDim2.new(0, 8, 0, 0), Enum.TextXAlignment.Left, true)
+    WmLabel.TextSize = 11
+    WmLabel.ZIndex = 91
+    WmLabel.Parent = Watermark
+    
+    local FpsLabel = createTextLabel("0 FPS", UDim2.new(0, 60, 1, 0), UDim2.new(1, -68, 0, 0), Enum.TextXAlignment.Right, false)
+    FpsLabel.TextSize = 11
+    FpsLabel.TextColor3 = Theme.AccentEnd
+    FpsLabel.ZIndex = 91
+    FpsLabel.Parent = Watermark
+    
+    -- FPS counter
+    local frameCount = 0
+    local lastTime = tick()
+    RunService.RenderStepped:Connect(function()
+        frameCount = frameCount + 1
+        local now = tick()
+        if now - lastTime >= 1 then
+            FpsLabel.Text = tostring(frameCount) .. " FPS"
+            frameCount = 0
+            lastTime = now
+        end
+    end)
+    
+    return Watermark
+end
+
+-- ═══════════════════════════════════════════════════
+-- CONFIG SAVE / LOAD
+-- ═══════════════════════════════════════════════════
+function Framework:SaveConfig(windowObj, configName)
+    local data = HttpService:JSONEncode(windowObj._configValues or {})
+    local fileName = configName .. ".json"
+    local success, err = pcall(function()
+        writefile(fileName, data)
+    end)
+    return success, err
+end
+
+function Framework:LoadConfig(windowObj, configName)
+    local fileName = configName .. ".json"
+    local success, data = pcall(function()
+        return readfile(fileName)
+    end)
+    if success and data then
+        local decoded = HttpService:JSONDecode(data)
+        windowObj._configValues = decoded
+        return true, decoded
+    end
+    return false, nil
+end
+
+-- ═══════════════════════════════════════════════════
+-- KEY SYSTEM (Optional)
+-- ═══════════════════════════════════════════════════
+function Framework:CreateKeySystem(screenGui, validKeys, onSuccess, options)
+    options = options or {}
+    local title = options.Title or "Key System"
+    local subtitle = options.Subtitle or "Devam etmek icin gecerli bir anahtar girin."
+    local maxAttempts = options.MaxAttempts or 5
+    local attempts = 0
+    
+    local Overlay = Instance.new("Frame")
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.3
+    Overlay.ZIndex = 200
+    Overlay.Parent = screenGui
+    
+    local KeyBox = Instance.new("Frame")
+    KeyBox.Size = UDim2.new(0, 360, 0, 200)
+    KeyBox.AnchorPoint = Vector2.new(0.5, 0.5)
+    KeyBox.Position = UDim2.new(0.5, 0, 0.5, 0)
+    KeyBox.BackgroundColor3 = Theme.WindowBackground
+    KeyBox.ZIndex = 201
+    KeyBox.Parent = Overlay
+    applyCorner(KeyBox)
+    applyStroke(KeyBox)
+    
+    -- Accent line
+    local AccLine = Instance.new("Frame")
+    AccLine.Size = UDim2.new(1, 0, 0, 2)
+    AccLine.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    AccLine.BorderSizePixel = 0
+    AccLine.ZIndex = 202
+    AccLine.Parent = KeyBox
+    applyGradient(AccLine)
+    
+    local KTitle = createTextLabel(title, UDim2.new(1, -30, 0, 30), UDim2.new(0, 15, 0, 15), Enum.TextXAlignment.Left, true)
+    KTitle.TextSize = 18
+    KTitle.ZIndex = 202
+    KTitle.Parent = KeyBox
+    
+    local KSubtitle = createTextLabel(subtitle, UDim2.new(1, -30, 0, 20), UDim2.new(0, 15, 0, 45), Enum.TextXAlignment.Left, false)
+    KSubtitle.TextSize = 12
+    KSubtitle.TextColor3 = Theme.TextSecondaryColor
+    KSubtitle.ZIndex = 202
+    KSubtitle.Parent = KeyBox
+    
+    local KeyInput = Instance.new("TextBox")
+    KeyInput.Size = UDim2.new(1, -30, 0, 34)
+    KeyInput.Position = UDim2.new(0, 15, 0, 80)
+    KeyInput.BackgroundColor3 = Theme.SectionBackground
+    KeyInput.Font = Theme.Font
+    KeyInput.Text = ""
+    KeyInput.PlaceholderText = "Anahtarinizi buraya girin..."
+    KeyInput.TextColor3 = Theme.TextColor
+    KeyInput.PlaceholderColor3 = Theme.TextSecondaryColor
+    KeyInput.TextSize = 13
+    KeyInput.ClearTextOnFocus = true
+    KeyInput.ZIndex = 202
+    KeyInput.Parent = KeyBox
+    applyCorner(KeyInput, UDim.new(0, 6))
+    applyStroke(KeyInput)
+    
+    local StatusLabel = createTextLabel("", UDim2.new(1, -30, 0, 16), UDim2.new(0, 15, 0, 118), Enum.TextXAlignment.Left, false)
+    StatusLabel.TextSize = 11
+    StatusLabel.TextColor3 = Color3.fromRGB(200, 60, 60)
+    StatusLabel.ZIndex = 202
+    StatusLabel.Parent = KeyBox
+    
+    local SubmitBtn = Instance.new("TextButton")
+    SubmitBtn.Size = UDim2.new(1, -30, 0, 34)
+    SubmitBtn.Position = UDim2.new(0, 15, 1, -48)
+    SubmitBtn.BackgroundColor3 = Theme.AccentEnd
+    SubmitBtn.Text = "Dogrula"
+    SubmitBtn.Font = Theme.BoldFont
+    SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SubmitBtn.TextSize = 14
+    SubmitBtn.ZIndex = 202
+    SubmitBtn.Parent = KeyBox
+    applyCorner(SubmitBtn, UDim.new(0, 6))
+    
+    local function tryValidate()
+        local enteredKey = KeyInput.Text
+        local valid = false
+        
+        if type(validKeys) == "table" then
+            for _, k in ipairs(validKeys) do
+                if k == enteredKey then valid = true break end
+            end
+        elseif type(validKeys) == "string" then
+            valid = (enteredKey == validKeys)
+        end
+        
+        if valid then
+            StatusLabel.TextColor3 = Color3.fromRGB(60, 200, 80)
+            StatusLabel.Text = "Anahtar dogru! Yukleniyor..."
+            task.delay(0.8, function()
+                Overlay:Destroy()
+                if onSuccess then onSuccess() end
+            end)
+        else
+            attempts = attempts + 1
+            StatusLabel.TextColor3 = Color3.fromRGB(200, 60, 60)
+            if attempts >= maxAttempts then
+                StatusLabel.Text = "Cok fazla basarisiz deneme."
+                task.delay(1.5, function()
+                    screenGui:Destroy()
+                end)
+            else
+                StatusLabel.Text = "Yanlis anahtar! (" .. attempts .. "/" .. maxAttempts .. ")"
+                TweenService:Create(KeyBox, TweenInfo.new(0.05, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 3, true), {Position = UDim2.new(0.5, 4, 0.5, 0)}):Play()
+            end
+        end
+    end
+    
+    SubmitBtn.MouseButton1Click:Connect(tryValidate)
+    KeyInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then tryValidate() end
+    end)
+    
+    return Overlay
+end
+
 return Framework
+

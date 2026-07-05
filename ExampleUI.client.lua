@@ -10,60 +10,111 @@ if not success then
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "PremiumKarpiwareHub"
+ScreenGui.Name = "CompletePremiumHub"
 ScreenGui.ResetOnSpawn = false
 
 local envSuccess, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = envSuccess and coreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local UI = UIFramework.new()
-local Window = UI:CreateWindow(ScreenGui, "Premium Hub", "Ultimate Feature Showcase")
 
+-- OPTIONAL KEY SYSTEM (Key System'i devre disi birakmak icin bu blogu silin)
+local KEY_SYSTEM_ENABLED = false -- true yaparsaniz key gerekir
+if KEY_SYSTEM_ENABLED then
+    UI:CreateKeySystem(ScreenGui, {"PREMIUM-2025", "VIP-KEY"}, function()
+        -- Key basarili, hub yukleniyor
+        loadHub()
+    end, {
+        Title = "Premium Hub Key",
+        Subtitle = "Devam etmek icin gecerli bir anahtar girin.",
+        MaxAttempts = 3
+    })
+    return
+end
+
+-- WATERMARK (Sol ust kose FPS gostergesi)
+UI:CreateWatermark(ScreenGui, "Premium Hub v2.0")
+
+-- ANA PENCERE
+local Window = UI:CreateWindow(ScreenGui, "Premium Hub", "Full-Feature Showcase")
+
+-- SEKMELER
 local LegitbotTab = UI:CreateTab(Window, "Legitbot", "rbxassetid://7059346373")
 local VisualsTab = UI:CreateTab(Window, "Visuals", "rbxassetid://6031290374")
 
--- LEGITBOT TAB
-local TopLeft = UI:CreateSection(LegitbotTab, "Aimbot", "Left")
-UI:CreateToggle(TopLeft, "Aimbot enabled", false)
+-- ═══════════════════════════════════════════════════
+-- LEGITBOT SEKMESI
+-- ═══════════════════════════════════════════════════
+local AimbotSection = UI:CreateSection(LegitbotTab, "Aimbot", "Left")
 
--- YENI: Tuş Atama Sistemi
-UI:CreateKeybind(TopLeft, "Aimbot Key", Enum.KeyCode.F, function(key, isPressed)
+UI:CreateToggle(AimbotSection, "Aimbot enabled", false)
+
+UI:CreateKeybind(AimbotSection, "Aimbot Key", Enum.KeyCode.F, function(key, isPressed)
     if isPressed then
         print("Aimbot key pressed:", key)
-    else
-        print("Aimbot key changed to:", key)
     end
 end)
 
-UI:CreateDropdown(TopLeft, "Hitbox", {"Head", "Neck", "Torso", "Legs"}, "Head", function(selected)
-    print("Aimbot Hitbox changed to:", selected)
+UI:CreateDropdown(AimbotSection, "Hitbox", {"Head", "Neck", "Torso", "Legs"}, "Head", function(selected)
+    print("Hitbox:", selected)
 end)
 
-UI:CreateMultiDropdown(TopLeft, "Target Selection", {"Distance", "Health", "FOV", "Threat"}, {"FOV"}, function(selectedList)
-    print("Multi Target Selection changed")
+UI:CreateSeparator(AimbotSection)
+
+UI:CreateSlider(AimbotSection, "Field of view", 0, 360, 180)
+
+-- Sag kolon
+local SettingsSection = UI:CreateSection(LegitbotTab, "Settings", "Right")
+
+UI:CreateMultiDropdown(SettingsSection, "Target", {"Distance", "Health", "FOV", "Threat"}, {"FOV"}, function(sel) end)
+
+UI:CreateTextBox(SettingsSection, "Webhook", "URL girin...", false, function(text)
+    print("Webhook:", text)
 end)
 
-UI:CreateSlider(TopLeft, "Field of view", 0, 360, 180)
+UI:CreateLabel(SettingsSection, "RightShift ile gizle/goster")
 
+-- ═══════════════════════════════════════════════════
+-- VISUALS SEKMESI
+-- ═══════════════════════════════════════════════════
+local EspSection = UI:CreateSection(VisualsTab, "ESP", "Left")
 
--- VISUALS TAB
-local EspSection = UI:CreateSection(VisualsTab, "ESP Details", "Left")
 UI:CreateToggle(EspSection, "Box ESP", true)
 
--- YENI: Renk Seçici (Color Picker)
 UI:CreateColorPicker(EspSection, "Box Color", Color3.fromRGB(0, 255, 150), function(color)
-    print("Box color changed to:", color)
+    print("Box color:", color)
 end)
 
-local SettingsSection = UI:CreateSection(VisualsTab, "System", "Right")
--- YENI: Bilgi Etiketi
-UI:CreateLabel(SettingsSection, "Welcome to the Premium Hub!")
-
--- YENI: Metin Girişi (TextBox)
-UI:CreateTextBox(SettingsSection, "Webhook URL", "https://discord.com/api...", false, function(text, enterPressed)
-    print("Webhook set to:", text)
+UI:CreateColorPicker(EspSection, "Name Color", Color3.fromRGB(255, 255, 0), function(color)
+    print("Name color:", color)
 end)
 
-UI:CreateButton(SettingsSection, "Arayüzü Kapat", function() ScreenGui:Destroy() end)
+local SystemSection = UI:CreateSection(VisualsTab, "System", "Right")
 
-print("Premium UI Components loaded successfully!")
+UI:CreateButton(SystemSection, "Bildirim Goster", function()
+    UI:Notify(ScreenGui, "Basarili!", "Bildirim sistemi calisiyor.", 3)
+end)
+
+UI:CreateButton(SystemSection, "Dialog Goster", function()
+    UI:CreateDialog(ScreenGui, "Uyari", "Tum ayarlari sifirlamak istiyor musunuz?", function()
+        print("Evet tiklandi")
+        UI:Notify(ScreenGui, "Sifirlandi", "Tum ayarlar varsayilana dondu.", 3)
+    end, function()
+        print("Hayir tiklandi")
+    end)
+end)
+
+UI:CreateSeparator(SystemSection)
+
+UI:CreateButton(SystemSection, "Arayuzu Kapat", function()
+    UI:CreateDialog(ScreenGui, "Cikis", "Arayuzu kapatmak istediginizden emin misiniz?", function()
+        ScreenGui:Destroy()
+    end)
+end)
+
+-- Baslangiç bildirimi
+task.delay(1, function()
+    UI:Notify(ScreenGui, "Hosgeldiniz!", "Premium Hub basariyla yuklendi.", 4)
+end)
+
+print("Complete Premium Hub loaded! Press RightShift to toggle visibility.")
