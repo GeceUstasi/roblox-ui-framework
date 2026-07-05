@@ -5,34 +5,34 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- Theme & Design Constants (Simplified, Sleek, Classic Premium Style)
+-- Theme & Design Constants (Balanced Modern Premium Style)
 local Theme = {
-    WindowBackground = Color3.fromRGB(20, 20, 25),
-    SidebarBackground = Color3.fromRGB(16, 16, 21),
-    SectionBackground = Color3.fromRGB(26, 26, 32),
+    WindowBackground = Color3.fromRGB(16, 16, 22),
+    SidebarBackground = Color3.fromRGB(12, 12, 16),
+    SectionBackground = Color3.fromRGB(22, 22, 28),
     
-    WindowTransparency = 0, -- Solid, clean look
-    SidebarTransparency = 0,
-    SectionTransparency = 0,
+    WindowTransparency = 0.05, -- Very slight glass
+    SidebarTransparency = 0.1,
+    SectionTransparency = 0.02,
     
-    ElementHover = Color3.fromRGB(36, 36, 42),
-    TabSelected = Color3.fromRGB(36, 36, 42),
+    ElementHover = Color3.fromRGB(34, 34, 40),
+    TabSelected = Color3.fromRGB(34, 34, 40),
     
-    -- Sleek Blue Accent (No crazy neon)
-    AccentStart = Color3.fromRGB(80, 140, 255),
-    AccentEnd = Color3.fromRGB(80, 140, 255),
+    -- Elegant Purple-to-Blue Gradient (Not as aggressive as neon pink)
+    AccentStart = Color3.fromRGB(130, 80, 255),
+    AccentEnd = Color3.fromRGB(60, 140, 255),
     
-    ToggleOff = Color3.fromRGB(40, 40, 48),
+    ToggleOff = Color3.fromRGB(38, 38, 44),
     
-    TextColor = Color3.fromRGB(240, 240, 240),
-    TextSecondaryColor = Color3.fromRGB(150, 150, 160),
+    TextColor = Color3.fromRGB(245, 245, 245),
+    TextSecondaryColor = Color3.fromRGB(140, 140, 150),
     
-    BorderColor = Color3.fromRGB(45, 45, 55),
-    BorderTransparency = 0,
+    BorderColor = Color3.fromRGB(42, 42, 50),
+    BorderTransparency = 0.05,
     
     Font = Enum.Font.GothamMedium,
     BoldFont = Enum.Font.GothamBold,
-    CornerRadius = UDim.new(0, 6) -- Sharper, cleaner corners
+    CornerRadius = UDim.new(0, 8) -- Perfect balance between sharp and round
 }
 
 local TweenInfoFast = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -108,6 +108,7 @@ function Framework:CreateWindow(screenGui, titleText, subtitleText)
     Window.Parent = screenGui
     applyCorner(Window)
     applyStroke(Window)
+    applyGlow(Window) -- Brought back the shadow for depth
     
     -- Sidebar (Upscaled)
     local Sidebar = Instance.new("Frame")
